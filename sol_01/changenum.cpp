@@ -22,4 +22,4 @@ int main()
 	cout << rev(n);
 
 	return 0;
-} 
+}
