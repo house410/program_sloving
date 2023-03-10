@@ -14,27 +14,26 @@ int romanToArabic(char c) {
     case 'C': return 100;
     case 'D': return 500;
     case 'M': return 1000;
-    default: return 0;
+    default: return 0; // 유효하지 않은 문자 처리
     }
 }
 
-string romanNum;
-int arabicNum = 0;
+string romanNum; // 사용자로부터 입력 받은 로마자 숫자
+int arabicNum = 0; // 로마자 숫자를 아라비아 숫자로 변환한 결과
 
 int gameLoop() {
 
     while (true) {
         cout << "로마자 숫자를 입력하세요 (종료하려면 esc 키를 누르세요): ";
 
-        //romanNum = _getch(); //입력 받기
+        romanNum = _getch(); // 한 글자씩 입력 받음
 
-        romanNum = _getch();
-        if (romanNum[0] != 27)
-            getline(cin, romanNum);
-        else {
-            break;
+        if (romanNum[0] != 27) { // esc 키가 입력되지 않았을 경우
+            getline(cin, romanNum); // 나머지 문자열을 입력 받음
         }
-
+        else {
+            break; // esc 키가 입력되면 루프 종료
+        }
 
         if (romanNum.empty()) { // 입력 오류 처리
             cout << "입력 오류입니다. 프로그램을 종료합니다." << endl;
@@ -56,9 +55,6 @@ int gameLoop() {
             }
         }
         cout << "아라비아 숫자로 변환한 결과: " << arabicNum << endl;
-        //if (romanNum.length() == arabicNum) { // 유효한 입력 처리
-        //    cout << "아라비아 숫자로 변환한 결과: " << arabicNum << endl;
-        //}
     }
 }
 
