@@ -1,117 +1,130 @@
 ﻿#include <iostream>
-#include <queue>
 #include <vector>
+#include <queue>
 using namespace std;
 
-const int SIZE = 10; // 그리드의 크기
+class Point {
+public:
+    int x;
+    int y;
 
-struct Point { // 좌표를 나타내는 구조체
-    int x, y, dist; // x좌표, y좌표, 시작점으로부터의 거리
-    bool operator<(const Point& other) const {
-        return dist > other.dist;
-    }
+    Point() : x(0), y(0) {}
+    Point(int x, int y) : x(x), y(y) {}
 };
 
-// 현재 위치의 이웃들을 반환하는 함수
-vector<Point> getNeighbors(int grid[][SIZE], int x, int y) {
-    vector<Point> neighbors;
-    int dx[] = { 0, 0, 1, -1 };
-    int dy[] = { 1, -1, 0, 0 };
-    for (int i = 0; i < 4; i++) {
-        int nx = x + dx[i];
-        int ny = y + dy[i];
-        if (nx >= 0 && nx < SIZE && ny >= 0 && ny < SIZE && grid[nx][ny] != 1) {
-            neighbors.push_back({ nx, ny, 1 });
+int main() {
+    const int n = 10; // 맵의 크기
+    char map[n][n]; // 맵 배열
+    bool visited[n][n]; // 방문 여부 체크 배열
+    Point start, end; // 출발점과 도착점
+    Point prev[n][n]; // 이전 위치 기록 배열
+
+    // 출발점과 도착점 입력 받기
+    cout << "출발점 입력 (x, y): ";
+    cin >> start.x >> start.y;
+    cout << "도착점 입력 (x, y): ";
+    cin >> end.x >> end.y;
+
+    // 맵 초기화
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            map[i][j] = '.'; // 빈 공간으로 초기화
+            visited[i][j] = false; // 방문 여부 체크 배열 초기화
         }
     }
-    return neighbors;
-}
 
-// 시작점에서 도착점까지의 최단 경로를 구하는 함수
-vector<Point> bfs(int grid[][SIZE], Point start, Point end) {
-    priority_queue<Point> pq;
-    vector<vector<bool>> visited(SIZE, vector<bool>(SIZE, false)); // 방문 여부 저장
-    vector<vector<Point>> prev(SIZE, vector<Point>(SIZE, { -1, -1, -1 })); // 경로 역추적을 위한 이전 좌표 저장
-    pq.push(start);
+    // 장애물 개수와 위치 입력 받기
+    int numObstacles;
+    cout << "장애물 개수: ";
+    cin >> numObstacles;
 
-    while (!pq.empty()) {
-        Point current = pq.top();
-        pq.pop();
-        if (current.x == end.x && current.y == end.y) { // 도착점에 도달한 경우
+    for (int i = 0; i < numObstacles; i++) {
+        int obstacleX, obstacleY;
+        cout << "장애물 " << i + 1 << " 위치 (x, y): ";
+        cin >> obstacleX >> obstacleY;
+        map[obstacleX][obstacleY] = 'X'; // 장애물 위치에 X로 표시
+    }
+
+    // 출발점과 도착점 설정
+    map[start.x][start.y] = 'p';
+    map[end.x][end.y] = 'e';
+
+    // BFS를 이용한 최단 경로 탐색
+    queue<Point> q;
+    q.push(start);
+    visited[start.x][start.y] = true;
+    prev[start.x][start.y] = start; // 출발점의 이전 위치는 자기 자신으로 설정
+
+    bool foundPath = false; // 도착점에 도달했는지 여부를 체크하는 변수
+
+    while (!q.empty()) {
+        Point current = q.front();
+        q.pop();
+
+        // 도착점에 도달한 경우 종료
+        if (current.x == end.x && current.y == end.y) {
+            foundPath = true;
             break;
         }
-        if (visited[current.x][current.y]) { // 이미 방문한 경우
-            continue;
-        }
-        visited[current.x][current.y] = true;
-        vector<Point> neighbors = getNeighbors(grid, current.x, current.y); // 현재 위치의 이웃들
-        for (Point neighbor : neighbors) {
-            if (!visited[neighbor.x][neighbor.y]) { // 이웃이 아직 방문하지 않은 경우
-                pq.push({ neighbor.x, neighbor.y, current.dist + neighbor.dist }); // 이웃을 우선순위 큐에 추가
-                prev[neighbor.x][neighbor.y] = current; // 이웃의 이전 좌표를 현재 좌표로 갱신
+
+        // 상하좌우로 이동
+        int dx[] = { -1, 0, 1, 0 };
+        int dy[] = { 0, 1, 0, -1 };
+
+        for (int i = 0; i < 4; i++) {
+            int nx = current.x + dx[i];
+            int ny = current.y + dy[i];
+            // 맵 범위를 벗어나는 경우 스킵
+            if (nx < 0 || nx >= n || ny < 0 || ny >= n) {
+                continue;
+            }
+
+            // 벽인 경우 스킵
+            if (map[nx][ny] == 'X') {
+                continue;
+            }
+
+            // 방문하지 않은 경우 큐에 추가하고 방문 여부 체크
+            if (!visited[nx][ny]) {
+                visited[nx][ny] = true;
+                q.push(Point(nx, ny));
+                prev[nx][ny] = current; // 이전 위치 기록
             }
         }
     }
 
-    vector<Point> shortestPath;
-    Point current = end;
-    while (current.x != -1 && current.y != -1) { // 경로 역추적
-        shortestPath.push_back(current);
-        current = prev[current.x][current.y];
+    // 도착점에서부터 역으로 출발점까지의 경로 출력
+    if (!visited[end.x][end.y]) {
+        cout << "최단 경로가 없습니다." << endl;
+        // 맵 출력
+        cout << endl << "맵 출력:" << endl;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cout << map[i][j] << " ";
+            }
+            cout << endl;
+        }
     }
-    reverse(shortestPath.begin(), shortestPath.end());
+    else {
+        cout << "최단 경로: ";
+        Point current = end;
+        while (!(current.x == start.x && current.y == start.y)) {
+            map[current.x][current.y] = 'o'; // 경로에 해당하는 위치에 *로 표시
+            current = prev[current.x][current.y];
+        }
+        map[start.x][start.y] = 'p'; // 출발점에 다시 p로 표시
+        map[end.x][end.y] = 'e';
 
-    return shortestPath;
+        // 맵 출력
+        cout << endl << "맵 출력:" << endl;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                cout << map[i][j] << " ";
+            }
+            cout << endl;
+        }
+    }
+
+    return 0;
 }
 
-int main() {
-    int grid[SIZE][SIZE] = {
-    {3, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 1, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {1, 1, 1, 1, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-    {0, 0, 0, 0, 0, 0, 0, 0, 0, 2}
-    };
-    Point start = { 0, 0 };
-    Point end = { 9, 9 };
-    vector<Point> shortestPath = bfs(grid, start, end);
-    for (int i = 0; i < shortestPath.size(); i++) {
-        cout << "(" << shortestPath[i].x << ", " << shortestPath[i].y << ") ";
-    }
-    cout << endl;
-
-    //맵출력
-    for (int i = 0; i < SIZE; i++) {
-        for (int j = 0; j < SIZE; j++) {
-            if (grid[i][j] == 0) {
-                cout << ". ";
-            }
-            else if (grid[i][j] == 1) {
-                cout << "X ";
-            }
-            else if (grid[i][j] == 2) {
-                cout << "E ";
-            }
-            else {
-                bool inPath = false;
-                for (int k = 0; k < shortestPath.size(); k++) {
-                    if (shortestPath[k].x == i && shortestPath[k].y == j) {
-                        cout << "P ";
-                        inPath = true;
-                        break;
-                    }
-                }
-                if (!inPath) {
-                    cout << ". ";
-                }
-            }
-        }
-        cout << endl;
-    }
-    return 0;
-} 
