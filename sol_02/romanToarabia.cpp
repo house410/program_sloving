@@ -1,6 +1,9 @@
 #include <iostream>
 #include <string>
+#include <thread>
+#include <regex> // 정규표현식 라이브러리 추가
 #include <conio.h>
+#include <Windows.h>
 
 using namespace std;
 
@@ -18,8 +21,23 @@ int romanToArabic(char c) {
     }
 }
 
-string romanNum; // 사용자로부터 입력 받은 로마자 숫자
-int arabicNum = 0; // 로마자 숫자를 아라비아 숫자로 변환한 결과
+
+// 유효한 로마자 숫자인지 검사하는 함수
+bool isRomanNum(string str) {
+    regex pattern("^(M{0,3})(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$");
+    return regex_match(str, pattern);
+}
+
+string romanNum;
+int arabicNum = 0;
+
+void inputThread() {
+    while (true) {
+        if (GetAsyncKeyState(VK_ESCAPE)) {
+            exit(0);
+        }
+    }
+}
 
 int gameLoop() {
 
@@ -35,20 +53,16 @@ int gameLoop() {
             break; // esc 키가 입력되면 루프 종료
         }
 
-        if (romanNum.empty()) { // 입력 오류 처리
-            cout << "입력 오류입니다. 프로그램을 종료합니다." << endl;
-            return 1;
+        if (!isRomanNum(romanNum)) { // 로마자 숫자가 유효하지 않을 경우
+            cout << "잘못된 입력입니다. 다시 입력해주세요." << endl;
+            continue;
         }
 
         // 로마자 숫자를 아라비아 숫자로 변환하는 과정
         arabicNum = 0;
         for (int i = 0; i < romanNum.length(); i++) {
-            if (romanToArabic(romanNum[i]) == 0) { // 유효하지 않은 문자 처리
-                cout << "잘못된 입력입니다. 다시 입력해주세요." << endl;
-                break;
-            }
-            if (i < romanNum.length() - 1 && romanToArabic(romanNum[i]) < romanToArabic(romanNum[i + 1])) {
-                arabicNum -= romanToArabic(romanNum[i]); // 작은 수가 큰 수 앞에 오는 경우
+            if (romanToArabic(romanNum[i]) < romanToArabic(romanNum[i + 1])) { // 작은 수가 큰 수 앞에 오는 경우
+                arabicNum -= romanToArabic(romanNum[i]);
             }
             else {
                 arabicNum += romanToArabic(romanNum[i]);
@@ -56,12 +70,15 @@ int gameLoop() {
         }
         cout << "아라비아 숫자로 변환한 결과: " << arabicNum << endl;
     }
+    return 0;
 }
 
+int main()
+{
+    thread inputThreadObj(inputThread); // 스레드 생성
 
-int main() {
+    gameLoop(); // 메인 스레드에서 실행
 
-    gameLoop();
-
+    inputThreadObj.join(); // 스레드 종료 대기
     return 0;
-} 
+}
