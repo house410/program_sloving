@@ -6,7 +6,9 @@
 #pragma warning(disable:4996)
 #define _CRT_SECURE_NO_WARNINGS
 
-int main() {
+void processFile(const char* filename);
+
+void processFile(const char* filename) {
     FILE* file;
     char line[MAX_LINE_LENGTH];
     int* i;             // int 형 동적 배열
@@ -17,10 +19,10 @@ int main() {
     int count_s = 0;    // %s 개수
 
     // 파일 열기
-    file = fopen("input.txt", "r");
+    file = fopen(filename, "r");
     if (file == NULL) {
         printf("Failed to open the file.\n");
-        return 1;
+        return;
     }
 
     // 파일에서 텍스트 읽어오기 및 개수 세기
@@ -82,8 +84,12 @@ int main() {
         free(s[j]);
     }
     free(s);
+
     // 파일 닫기
     fclose(file);
+}
 
+int main() {
+    processFile("input.txt");
     return 0;
 }
